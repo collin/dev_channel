@@ -6,12 +6,13 @@ class DevChannel::Connection
   def initialize(socket)
     info "Streaming DevChannel updates to client #{socket}"
     @socket = socket
-    subscribe('file_change', :notify_file_change)
+    subscribe('script_change', :notify_script_change)
+    subscribe('style_change', :notify_style_change)
   end
 
-  def notify_file_change(topic, path, relative_path)
+  def notify_script_change(topic, path, relative_path)
     source = DevChannel::SourceFile.new(path)
-    instrument :FileChange
+    instrument :ScriptChange
     info relative_path
     @socket <<(
       JSON.dump(
@@ -26,7 +27,22 @@ class DevChannel::Connection
     info "AssetChangeServer client disconnected"
     terminate
   ensure
-    end_instrument :FileChange
+    end_instrument :ScriptChange
+  end
+
+  def notify_style_change(topic)
+    instrument :StyleChange
+    @socket <<(
+      JSON.dump(
+        protocol: "loadStyle"#,
+        # args: [relative_path]
+      )
+    )
+  rescue Reel::SocketError
+    info "AssetChangeServer client disconnected"
+    terminate
+  ensure
+    end_instrument :StyleChange
   end
 
   def instrument(id)
@@ -35,8 +51,11 @@ class DevChannel::Connection
   end
 
   def end_instrument(id)
-    started_at = @active.delete(id)
-    total = ((Time.new - started_at) * 1000.0).to_s
-    info "[#{id}] #{total}ms"
+    begin
+      started_at = @active.delete(id)
+      total = ((Time.new - started_at) * 1000.0).to_s
+      info "[#{id}] #{total}ms"
+    rescue #whatever!
+    end
   end
 end

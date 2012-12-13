@@ -26,9 +26,21 @@ class window.DevChannel
       console.info "Reason Unknown"
       console.log "reload page to reconnect"
 
-  loadStylesheet: (path, source) ->
-  
   loadScript: (path, source) ->
     console.log "loadScript", path, source.length
     minispade.modules[path] = source
+    $?(document).trigger new $.Event("devchannel:script", path: path, source: source)
+
+  loadStyle: (path) ->
+    stylesheets = $('[rel="stylesheet"]')
+    for stylesheet in stylesheets
+      @reloadStyle(stylesheet)
+
+  reloadStyle: (stylesheet) ->
+    clone = $(stylesheet).clone()
+    href = $(stylesheet).attr("href").replace(/\?.*/, '')
+    $(clone).attr("href", "#{href}?#{Math.random()}")
+    $(stylesheet).before(clone)
+    clone.on "load", -> 
+      stylesheet.remove()
     

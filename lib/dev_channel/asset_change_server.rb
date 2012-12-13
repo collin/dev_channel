@@ -14,9 +14,15 @@ class DevChannel::AssetChangeServer
   def add_project(assetfile, target)
     assetdir = Pathname.new(assetfile).dirname.to_s
     target = target
-    watcher = DevChannel::AssetChangeWatcher.new(assetfile, assetdir, target)
+    watcher = DevChannel::ScriptChangeWatcher.new(assetfile, assetdir, target)
     @watchers << watcher
-    watcher.listen
+    watcher.async.listen
+  end
+
+  def listen_to_stylesheets
+    watcher = DevChannel::StylesheetChangeWatcher.new
+    @watchers << watcher
+    watcher.async.listen
   end
 end
 

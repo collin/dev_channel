@@ -10,6 +10,8 @@ module DevChannel
       else
         render text: "???", layout: nil
       end
+    rescue
+      Rails.logger.warn "OH FUCK CONNECTION BROKE!"
     end
 
     def require_websocket
